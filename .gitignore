@@ -1,0 +1,21 @@
+# Ambiente Virtual
+venv/
+.venv/
+
+# Arquivos de Banco de Dados
+*.db
+*.duckdb
+
+# Arquivos gerados pelo dbt
+**/logs/
+**/target/
+dbt_packages/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de IDE
+.vscode/

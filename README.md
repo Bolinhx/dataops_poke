@@ -59,8 +59,8 @@ Siga os passos abaixo para executar o pipeline no seu ambiente.
 
 1.  **Clone o Repositório:**
     ```bash
-    git clone [https://github.com/seu-usuario/dataops-pokemon-pipeline.git](https://github.com/seu-usuario/dataops-pokemon-pipeline.git)
-    cd dataops-pokemon-pipeline
+    git clone https://github.com/Bolinhx/dataops_poke/
+    cd dataops_poke
     ```
 
 2.  **Crie e Ative o Ambiente Virtual:**

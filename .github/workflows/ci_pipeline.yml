@@ -1,0 +1,55 @@
+
+name: CI - Pipeline de Dados Pokémon
+
+# Gatilho
+on:
+  push:
+    branches:
+      - main
+  
+  workflow_dispatch:
+
+jobs:
+  build_and_test_pipeline:
+    # A máquina virtual que será usada.
+    runs-on: ubuntu-latest
+
+    steps:
+      # lona o código do seu repositório para a máquina virtual
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      # Configura o ambiente Python na máquina virtual
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' # Use a mesma versão que você tem localmente
+
+      # Instala todas as dependências do projeto
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # Executa o pipeline de ingestão de dados
+      # Ele vai criar o arquivo pokemon_raw.db dentro da máquina virtual
+      - name: Rodar script de ingestão (Prefect)
+        run: python3 ingestions.py
+
+      # Configura o perfil do dbt
+  
+      - name: Configurar perfil do dbt
+        run: |
+          mkdir -p ~/.dbt
+          echo "poke_dbt:" > ~/.dbt/profiles.yml
+          echo "  target: dev" >> ~/.dbt/profiles.yml
+          echo "  outputs:" >> ~/.dbt/profiles.yml
+          echo "    dev:" >> ~/.dbt/profiles.yml
+          echo "      type: duckdb" >> ~/.dbt/profiles.yml
+          # O '$GITHUB_WORKSPACE' é uma variável de ambiente que aponta para a pasta do projeto
+          echo "      path: ${{ github.workspace }}/pokemon_raw.db" >> ~/.dbt/profiles.yml
+
+      # Executa o build do dbt (run + test)
+      - name: Rodar dbt build
+        # Usei o --project-dir para dizer ao dbt onde encontrar o projeto
+        run: dbt build --project-dir ./poke_dbt

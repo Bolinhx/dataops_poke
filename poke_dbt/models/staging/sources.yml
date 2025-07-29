@@ -4,4 +4,4 @@ sources:
   - name: raw_pokemon_data 
     schema: public
     tables:
-      - name: pokemon_top_20
+      - name: pokemon_generation_1

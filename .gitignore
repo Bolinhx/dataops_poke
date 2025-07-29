@@ -1,6 +1,7 @@
 # Ambiente Virtual
 venv/
 .venv/
+.env
 
 # Arquivos de Banco de Dados
 *.db

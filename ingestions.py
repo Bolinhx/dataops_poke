@@ -1,8 +1,11 @@
+from fastapi import logger
 import pandas as pd
 import requests
 import time
+import os
 from sqlalchemy import create_engine
 from prefect import task, flow, get_run_logger
+from dotenv import load_dotenv
 
 @task(retries=3, retry_delay_seconds=10, log_prints=True)
 def fetch_and_prepare_data(path: str) -> pd.DataFrame:
@@ -33,11 +36,14 @@ def enrich_data_with_api(df: pd.DataFrame, num_records: int) -> pd.DataFrame:
         logger.warning("DataFrame vazio, pulando etapa de enriquecimento.")
         return None
 
-    df_sample = df.head(num_records).copy()
+    df_gen1 = df[df['generation'] == 1].copy()
+    logger.info(f"Filtrado para a Geração 1. Total de {len(df_gen1)} registros encontrados.")
+
+
     image_urls = []
     logger.info(f"Iniciando o enriquecimento com a PokeApi para {num_records} registros...")
     
-    for index, row in df_sample.iterrows():
+    for index, row in df_gen1.iterrows():
         pokemon_name = row['name'].lower()
         logger.info(f"  -> Buscando dados para: {pokemon_name}")
         try:
@@ -54,10 +60,9 @@ def enrich_data_with_api(df: pd.DataFrame, num_records: int) -> pd.DataFrame:
             image_urls.append(None)
         time.sleep(0.5)
 
-    df_sample['sprite_url'] = image_urls
+    df_gen1['sprite_url'] = image_urls
     logger.info("Processo de enriquecimento finalizado.")
-    return df_sample
-
+    return df_gen1
 @task(log_prints=True)
 def save_data_to_db(df: pd.DataFrame, db_name: str, table_name: str):
     """Salva o DataFrame em uma tabela do DuckDB."""
@@ -66,9 +71,16 @@ def save_data_to_db(df: pd.DataFrame, db_name: str, table_name: str):
         logger.warning("Nenhum dado para salvar.")
         return
 
-    logger.info(f"Iniciando salvamento no banco de dados '{db_name}.db'...")
+    logger.info(f"Carregando variáveis de ambiente de '.env'...")
+    load_dotenv(dotenv_path='.env') 
+
+    connection_string = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
+
     try:
-        engine = create_engine(f"duckdb:///{db_name}.db")
+        engine = create_engine(connection_string)
         df.to_sql(table_name, con=engine, if_exists='replace', index=False)
         logger.info(f"Dados salvos com sucesso na tabela '{table_name}'!")
     except Exception as e:
@@ -76,17 +88,18 @@ def save_data_to_db(df: pd.DataFrame, db_name: str, table_name: str):
         raise
 
 @flow(name="ETL de Pokémon - Ingestão e Enriquecimento", log_prints=True)
-def pokemon_etl_flow(num_pokemon: int = 10):
+def pokemon_etl_flow():
     """
     Fluxo principal que orquestra a ingestão de dados de Pokémon,
     o enriquecimento via API e o salvamento em um banco de dados.
     """
     path = 'data/pokemon.csv'
     database_name = 'pokemon_raw'
+    table_name = 'pokemon_generation_1'
     
     df_raw = fetch_and_prepare_data(path)
-    df_enriched = enrich_data_with_api(df_raw, num_records=num_pokemon)
-    save_data_to_db(df_enriched, database_name, table_name=f'pokemon_top_{num_pokemon}')
+    df_enriched = enrich_data_with_api(df_raw)
+    save_data_to_db(df_enriched, table_name=table_name)
 
 if __name__ == "__main__":
     # Executa o fluxo com um número específico de pokémons

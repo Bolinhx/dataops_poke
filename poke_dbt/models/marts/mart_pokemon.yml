@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: mart_pokemon
+    description: "Modelo final de Pokémon, enriquecido com métricas e classificações. Esta é a tabela principal a ser consumida por ferramentas de BI."
+    columns:
+      - name: pokemon_id
+        description: "O ID único de cada Pokémon (National Pokédex Number)."
+        tests:
+          - unique   # Garante que não há IDs duplicados.
+          - not_null # Garante que todo Pokémon tem um ID.
+
+      - name: pokemon_name
+        description: "O nome do Pokémon."
+        tests:
+          - not_null # Garante que todo Pokémon precisa de um nome.
+      
+      - name: power_tier
+        description: "A classificação de força do Pokémon com base no total de stats."
+        tests:
+          # Garante que a coluna só pode ter um desses 4 valores.
+          - accepted_values:
+              values: ['Lendário', 'Forte', 'Comum', 'Fraco']

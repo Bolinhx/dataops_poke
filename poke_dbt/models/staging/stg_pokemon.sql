@@ -1,5 +1,7 @@
 with source as (
-    select * from {{ source('raw_pokemon_data', 'pokemon_top_20') }}
+
+    select * from {{ source('raw_pokemon_data', 'pokemon_top_20') }} 
+
 )
 
 select

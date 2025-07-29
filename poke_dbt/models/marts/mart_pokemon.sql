@@ -2,8 +2,6 @@
 
 with stg_pokemon as (
 
-    -- A função ref() é a forma como o dbt cria dependências entre os modelos.
-    -- no caso aqui estamos referenciando o staging 
     select * from {{ ref('stg_pokemon') }}
 
 ),

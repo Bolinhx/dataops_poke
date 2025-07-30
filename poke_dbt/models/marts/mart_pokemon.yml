@@ -7,17 +7,16 @@ models:
       - name: pokemon_id
         description: "O ID único de cada Pokémon (National Pokédex Number)."
         tests:
-          - unique   # Garante que não há IDs duplicados.
-          - not_null # Garante que todo Pokémon tem um ID.
+          - unique
+          - not_null
 
       - name: pokemon_name
         description: "O nome do Pokémon."
         tests:
-          - not_null # Garante que todo Pokémon precisa de um nome.
+          - not_null
       
-      - name: power_tier
-        description: "A classificação de força do Pokémon com base no total de stats."
+      - name: combat_role 
+        description: "A classificação da função do Pokémon em combate."
         tests:
-          # Garante que a coluna só pode ter um desses 4 valores.
-          - accepted_values:
-              values: ['Lendário', 'Forte', 'Comum', 'Fraco']
+          - accepted_values: 
+              values: ['Sweeper', 'Wall', 'Breaker', 'Utilitário']

@@ -1,46 +1,45 @@
 
-
 with stg_pokemon as (
-
     select * from {{ ref('stg_pokemon') }}
-
 ),
 
--- adicionando nossas transformações e regras de negócio
-final_pokemon as (
-
+average_stats as (
     select
-        -- Mantemos as colunas que já temos
-        pokemon_id,
-        pokemon_name,
-        generation,
-        primary_type,
-        secondary_type,
-        height_m,
-        weight_kg,
-        hp,
-        attack,
-        defense,
-        sp_attack,
-        sp_defense,
-        speed,
-        sprite_url,
+        avg(attack + sp_attack) as avg_total_offense,
+        
+        avg(defense + sp_defense) as avg_total_defense,
 
-        -- Adicionamos novas colunas calculadas
-        (hp + attack + defense + sp_attack + sp_defense + speed) as total_stats,
+        avg(speed) as avg_speed
+    from stg_pokemon
+),
+
+final_pokemon as (
+    select
+        stg_pokemon.*,
+
+        (stg_pokemon.attack + stg_pokemon.sp_attack) as total_offense,
+        (stg_pokemon.defense + stg_pokemon.sp_defense) as total_defense,
 
         case
-            when (hp + attack + defense + sp_attack + sp_defense + speed) >= 600 then 'Lendário'
-            when (hp + attack + defense + sp_attack + sp_defense + speed) >= 450 then 'Forte'
-            when (hp + attack + defense + sp_attack + sp_defense + speed) >= 300 then 'Comum'
-            else 'Fraco'
-        end as power_tier,
+            -- 1. Sweepers: Ataque total E velocidade acima da média
+            when (stg_pokemon.attack + stg_pokemon.sp_attack) >= average_stats.avg_total_offense
+             and stg_pokemon.speed >= average_stats.avg_speed
+             then 'Sweeper'
 
-        -- Criamos uma coluna que combina os tipos para facilitar a filtragem
-        primary_type || coalesce(' / ' || secondary_type, '') as full_type
+            -- 2. Walls: Defesa total acima da média
+            when (stg_pokemon.defense + stg_pokemon.sp_defense) >= average_stats.avg_total_defense
+             then 'Wall'
+
+            -- 3. Breakers (Glass Cannons): Ataque total acima da média, mas não se qualificou como Sweeper (ou seja, velocidade não é alta)
+            when (stg_pokemon.attack + stg_pokemon.sp_attack) >= average_stats.avg_total_offense
+             then 'Breaker'
+
+            else 'Utilitário'
+        end as combat_role
 
     from stg_pokemon
+    
+    cross join average_stats
 )
 
--- resultado final
 select * from final_pokemon

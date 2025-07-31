@@ -36,32 +36,16 @@ Utilizando dados do universo Pokémon, o pipeline automatiza a ingestão, limpez
 
 ```mermaid
 graph LR
-    subgraph Fontes
-        A[Kaggle CSV]
-        B[PokeAPI]
-    end
-
-    subgraph "Execução (Local/CI)"
-        C[Pipeline de Ingestão<br/>(Python + Prefect)] --> D[Transformação e Testes<br/>(dbt build)]
-    end
-    
-    subgraph "Nuvem (Render.com)"
-        E[Banco de Dados<br/>(PostgreSQL)]
-    end
-
-    subgraph "Visualização (Local)"
-      F((Dashboard BI<br/>Metabase via Docker))
-    end
-    
-    A --> C
-    B --> C
-    D -- Salva/Transforma --> E
-    F -- Lê de --> E
+    A["Fontes de Dados<br/>(Kaggle CSV + PokeAPI)"] --> B["Pipeline de Ingestão<br/>(Python + Prefect)"];
+    B --> C["Banco de Dados na Nuvem<br/>(PostgreSQL)"];
+    C --> D["Transformação e Testes<br/>(dbt build)"];
+    D --> E((Dashboard BI<br/>Metabase via Docker));
 ```
 
 ## 📊 Preview do Dashboard
 
 
+![Animação dashboard](https://github.com/user-attachments/assets/397fa4ac-13d8-4ba4-babf-6df269316fb9)
 
 
 

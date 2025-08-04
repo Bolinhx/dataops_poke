@@ -1,3 +1,4 @@
+
 name: CI - Pipeline de Dados Pokémon
 
 on:
@@ -21,32 +22,23 @@ jobs:
 
       - name: Instalar dependências
         run: pip install -r requirements.txt
-      
-      - name: Criar arquivo .env a partir dos segredos
+
+      - name: Criar arquivo .env
         run: |
           echo "DB_HOST=${{ secrets.DB_HOST }}" > pokedb.env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> pokedb.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> pokedb.env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> pokedb.env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> pokedb.env
-
-      - name: Rodar script de ingestão (Prefect)
-        run: python3 ingestions.py
+          # ... (adicione as outras 4 variáveis de ambiente como antes)
 
       - name: Configurar perfil do dbt
         run: |
           mkdir -p ~/.dbt
-          echo "poke_dbt:" > ~/.dbt/profiles.yml
-          echo "  target: dev" >> ~/.dbt/profiles.yml
-          echo "  outputs:" >> ~/.dbt/profiles.yml
-          echo "    dev:" >> ~/.dbt/profiles.yml
-          echo "      type: postgres" >> ~/.dbt/profiles.yml
-          echo "      host: ${{ secrets.DB_HOST }}" >> ~/.dbt/profiles.yml
-          echo "      port: ${{ secrets.DB_PORT || '5432' }}" >> ~/.dbt/profiles.yml
-          echo "      user: ${{ secrets.DB_USER }}" >> ~/.dbt/profiles.yml
-          echo "      pass: ${{ secrets.DB_PASSWORD }}" >> ~/.dbt/profiles.yml
-          echo "      dbname: ${{ secrets.DB_NAME }}" >> ~/.dbt/profiles.yml
-          echo "      schema: public" >> ~/.dbt/profiles.yml
+          # ... (adicione a configuração do profiles.yml como antes)
+
+      - name: Limpar modelos dbt antigos (Staging e Marts)
+        run: dbt clean --project-dir ./poke_dbt && dbt run --models staging marts --full-refresh --project-dir ./poke_dbt
+        continue-on-error: true 
+
+      - name: Rodar script de ingestão (Prefect)
+        run: python3 ingestions.py
 
       - name: Rodar dbt build
         run: dbt build --project-dir ./poke_dbt

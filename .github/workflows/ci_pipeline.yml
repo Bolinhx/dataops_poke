@@ -26,20 +26,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      
       - name: Criar arquivo .env
         run: |
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> pokedb.env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> pokedb.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> pokedb.env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> pokedb.env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> pokedb.env
-          echo "Arquivo .env criado com sucesso."
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
 
       - name: Rodar script de ingestão (Prefect)
         run: python3 ingestions.py
 
-     
       - name: Configurar perfil do dbt
         run: |
           mkdir -p ~/.dbt
@@ -49,7 +46,8 @@ jobs:
           echo "    dev:" >> ~/.dbt/profiles.yml
           echo "      type: postgres" >> ~/.dbt/profiles.yml
           echo "      host: ${{ secrets.DB_HOST }}" >> ~/.dbt/profiles.yml
-          echo "      port: ${{ secrets.DB_PORT |_default(5432) }}" >> ~/.dbt/profiles.yml
+          # LINHA CORRIGIDA ABAIXO:
+          echo "      port: ${{ secrets.DB_PORT || '5432' }}" >> ~/.dbt/profiles.yml
           echo "      user: ${{ secrets.DB_USER }}" >> ~/.dbt/profiles.yml
           echo "      pass: ${{ secrets.DB_PASSWORD }}" >> ~/.dbt/profiles.yml
           echo "      dbname: ${{ secrets.DB_NAME }}" >> ~/.dbt/profiles.yml

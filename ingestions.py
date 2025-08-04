@@ -112,11 +112,11 @@ def pokemon_etl_flow(num_pokemon: int):
     """
     Fluxo que ingere, limpa, enriquece e salva dados de Pokémon.
     """
-    load_dotenv(dotenv_path='.env')
+    load_dotenv(dotenv_path='pokedb.env')
     
     connection_string = (
         f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT', 5432)}/{os.getenv('DB_NAME')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     )
 
     path = 'data/pokemon.csv'

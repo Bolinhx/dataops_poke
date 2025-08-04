@@ -1,5 +1,3 @@
-
-
 name: CI - Pipeline de Dados Pokémon
 
 on:
@@ -22,17 +20,15 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependências
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
       
-      - name: Criar arquivo .env
+      - name: Criar arquivo .env a partir dos segredos
         run: |
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > pokedb.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> pokedb.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> pokedb.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> pokedb.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> pokedb.env
 
       - name: Rodar script de ingestão (Prefect)
         run: python3 ingestions.py
@@ -46,7 +42,6 @@ jobs:
           echo "    dev:" >> ~/.dbt/profiles.yml
           echo "      type: postgres" >> ~/.dbt/profiles.yml
           echo "      host: ${{ secrets.DB_HOST }}" >> ~/.dbt/profiles.yml
-          # LINHA CORRIGIDA ABAIXO:
           echo "      port: ${{ secrets.DB_PORT || '5432' }}" >> ~/.dbt/profiles.yml
           echo "      user: ${{ secrets.DB_USER }}" >> ~/.dbt/profiles.yml
           echo "      pass: ${{ secrets.DB_PASSWORD }}" >> ~/.dbt/profiles.yml

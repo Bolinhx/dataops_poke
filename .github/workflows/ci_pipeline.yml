@@ -1,43 +1,45 @@
 
+
 name: CI - Pipeline de Dados Pokémon
 
-# Gatilho
 on:
   push:
     branches:
       - main
-  
   workflow_dispatch:
 
 jobs:
   build_and_test_pipeline:
-    # A máquina virtual que será usada.
     runs-on: ubuntu-latest
 
     steps:
-      # lona o código do seu repositório para a máquina virtual
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      # Configura o ambiente Python na máquina virtual
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11' # Use a mesma versão que você tem localmente
+          python-version: '3.11'
 
-      # Instala todas as dependências do projeto
       - name: Instalar dependências
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      # Executa o pipeline de ingestão de dados
-      # Ele vai criar o arquivo pokemon_raw.db dentro da máquina virtual
+      
+      - name: Criar arquivo .env
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> pokedb.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> pokedb.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> pokedb.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> pokedb.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> pokedb.env
+          echo "Arquivo .env criado com sucesso."
+
       - name: Rodar script de ingestão (Prefect)
         run: python3 ingestions.py
 
-      # Configura o perfil do dbt
-  
+     
       - name: Configurar perfil do dbt
         run: |
           mkdir -p ~/.dbt
@@ -45,11 +47,13 @@ jobs:
           echo "  target: dev" >> ~/.dbt/profiles.yml
           echo "  outputs:" >> ~/.dbt/profiles.yml
           echo "    dev:" >> ~/.dbt/profiles.yml
-          echo "      type: duckdb" >> ~/.dbt/profiles.yml
-          # O '$GITHUB_WORKSPACE' é uma variável de ambiente que aponta para a pasta do projeto
-          echo "      path: ${{ github.workspace }}/pokemon_raw.db" >> ~/.dbt/profiles.yml
+          echo "      type: postgres" >> ~/.dbt/profiles.yml
+          echo "      host: ${{ secrets.DB_HOST }}" >> ~/.dbt/profiles.yml
+          echo "      port: ${{ secrets.DB_PORT |_default(5432) }}" >> ~/.dbt/profiles.yml
+          echo "      user: ${{ secrets.DB_USER }}" >> ~/.dbt/profiles.yml
+          echo "      pass: ${{ secrets.DB_PASSWORD }}" >> ~/.dbt/profiles.yml
+          echo "      dbname: ${{ secrets.DB_NAME }}" >> ~/.dbt/profiles.yml
+          echo "      schema: public" >> ~/.dbt/profiles.yml
 
-      # Executa o build do dbt (run + test)
       - name: Rodar dbt build
-        # Usei o --project-dir para dizer ao dbt onde encontrar o projeto
         run: dbt build --project-dir ./poke_dbt
